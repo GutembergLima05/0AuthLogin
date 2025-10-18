@@ -1,0 +1,109 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using _0AuthLogin.Models;
+
+namespace _0AuthLogin.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class AuthController : ControllerBase
+{
+    private readonly ILogger<AuthController> _logger;
+
+    public AuthController(ILogger<AuthController> logger)
+    {
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Inicia o processo de login com Google
+    /// </summary>
+    [HttpGet("login")]
+    public IActionResult Login(string returnUrl = "/")
+    {
+        var redirectUri = Url.Action(nameof(Callback), new { returnUrl });
+        _logger.LogInformation("RedirectUri gerado: {redirectUri}", redirectUri);
+
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = "https://fourdevs-0authteste.6vsxxi.easypanel.host/auth"
+        };
+
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+    }
+
+    /// <summary>
+    /// Callback após autenticação com Google
+    /// </summary>
+    [HttpGet("callback")]
+    public async Task<IActionResult> Callback(string returnUrl = "/")
+    {
+        var authenticateResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        if (!authenticateResult.Succeeded)
+        {
+            return BadRequest(new { message = "Falha na autenticação" });
+        }
+
+        var claims = authenticateResult.Principal?.Claims;
+        var userInfo = new UserInfo
+        {
+            Id = claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "",
+            Email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? "",
+            Name = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "",
+            Picture = claims?.FirstOrDefault(c => c.Type == "picture")?.Value ?? "",
+            Provider = "Google"
+        };
+
+        // Redirecionar para a página inicial após login bem-sucedido
+        return Redirect("/?authenticated=true");
+    }
+
+    /// <summary>
+    /// Retorna informações do usuário autenticado
+    /// </summary>
+    [Authorize]
+    [HttpGet("user")]
+    public IActionResult GetUser()
+    {
+        var claims = User.Claims;
+        var userInfo = new UserInfo
+        {
+            Id = claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "",
+            Email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? "",
+            Name = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "",
+            Picture = claims?.FirstOrDefault(c => c.Type == "picture")?.Value ?? "",
+            Provider = "Google"
+        };
+
+        return Ok(userInfo);
+    }
+
+    /// <summary>
+    /// Realiza logout
+    /// </summary>
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return Ok(new { message = "Logout realizado com sucesso" });
+    }
+
+    /// <summary>
+    /// Verifica se o usuário está autenticado
+    /// </summary>
+    [HttpGet("status")]
+    public IActionResult Status()
+    {
+        return Ok(new
+        {
+            isAuthenticated = User.Identity?.IsAuthenticated ?? false,
+            name = User.Identity?.Name
+        });
+    }
+}
