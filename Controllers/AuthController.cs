@@ -76,10 +76,4 @@ public class AuthController : ControllerBase
             name = User.Identity?.Name
         });
     }
-
-    [HttpGet("")]
-    public async Task<IActionResult> RedirectToAuth()
-    {
-        return Redirect("/auth");
-    }
 }
