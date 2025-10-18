@@ -65,12 +65,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/", context =>
-{
-    context.Response.Redirect("/auth");
-    return Task.CompletedTask;
-});
-
 app.MapFallbackToFile("index.html");
 
 app.Run();
