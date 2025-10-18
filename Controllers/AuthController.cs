@@ -25,42 +25,12 @@ public class AuthController : ControllerBase
     [HttpGet("login")]
     public IActionResult Login(string returnUrl = "/")
     {
-        var redirectUri = Url.Action(nameof(Callback), new { returnUrl });
-        _logger.LogInformation("RedirectUri gerado: {redirectUri}", redirectUri);
-
         var properties = new AuthenticationProperties
         {
             RedirectUri = "https://fourdevs-0authteste.6vsxxi.easypanel.host/auth"
         };
 
         return Challenge(properties, GoogleDefaults.AuthenticationScheme);
-    }
-
-    /// <summary>
-    /// Callback após autenticação com Google
-    /// </summary>
-    [HttpGet("callback")]
-    public async Task<IActionResult> Callback(string returnUrl = "/")
-    {
-        var authenticateResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-        if (!authenticateResult.Succeeded)
-        {
-            return BadRequest(new { message = "Falha na autenticação" });
-        }
-
-        var claims = authenticateResult.Principal?.Claims;
-        var userInfo = new UserInfo
-        {
-            Id = claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "",
-            Email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? "",
-            Name = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "",
-            Picture = claims?.FirstOrDefault(c => c.Type == "picture")?.Value ?? "",
-            Provider = "Google"
-        };
-
-        // Redirecionar para a página inicial após login bem-sucedido
-        return Redirect("/?authenticated=true");
     }
 
     /// <summary>
