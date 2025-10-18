@@ -29,7 +29,7 @@ builder.Services.AddAuthentication(options =>
     options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? throw new Exception("Google ClientId não configurado");
     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? throw new Exception("Google ClientSecret não configurado");
     options.SaveTokens = true;
-    options.CallbackPath = "/auth/callback";
+    options.CallbackPath = "/auth";
 
     // Escopos adicionais (opcional)
     options.Scope.Add("profile");

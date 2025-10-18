@@ -13,10 +13,12 @@ namespace _0AuthLogin.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly ILogger<AuthController> _logger;
+    private readonly IConfiguration _configuration;
 
-    public AuthController(ILogger<AuthController> logger)
+    public AuthController(ILogger<AuthController> logger, IConfiguration configuration)
     {
         _logger = logger;
+        _configuration = configuration;
     }
 
     /// <summary>
@@ -25,9 +27,11 @@ public class AuthController : ControllerBase
     [HttpGet("login")]
     public IActionResult Login(string returnUrl = "/")
     {
+        var urlProd = _configuration["UrlProd"];
+        
         var properties = new AuthenticationProperties
         {
-            RedirectUri = "https://fourdevs-0authteste.6vsxxi.easypanel.host/auth"
+            RedirectUri = urlProd
         };
 
         return Challenge(properties, GoogleDefaults.AuthenticationScheme);
