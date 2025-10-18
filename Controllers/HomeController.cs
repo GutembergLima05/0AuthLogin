@@ -7,7 +7,7 @@ namespace _0AuthLogin.Controllers
     public class HomeController : ControllerBase
     {
         [HttpGet("")]
-        public async Task<IActionResult> RedirectToAuth()
+        public IActionResult RedirectToAuth()
         {
             return Redirect("/auth");
         }
