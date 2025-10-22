@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using System.Threading.RateLimiting;
-using static System.Net.WebRequestMethods;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,7 +85,7 @@ app.Use(async (context, next) =>
     context.Response.Headers.Append("Content-Security-Policy",
     "default-src 'self'; " +
     "script-src 'self'; " +
-    "style-src 'self'; " + // Remover 'unsafe-inline'
+    "style-src 'self'; " + 
     "img-src 'self' data: https://lh3.googleusercontent.com; " + // Para fotos do Google
     "font-src 'self'; " +
     "connect-src 'self' https://accounts.google.com; " + // Para OAuth
@@ -97,7 +96,6 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseStaticFiles();
 
 app.UseRouting();
 
@@ -119,7 +117,5 @@ app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.MapFallbackToFile("index.html");
 
 app.Run();
