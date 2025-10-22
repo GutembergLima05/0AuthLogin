@@ -47,7 +47,6 @@ public class AuthController : ControllerBase
         var claims = User.Claims;
         var userInfo = new UserInfo
         {
-            Id = claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "",
             Email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? "",
             Name = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value ?? "",
             Picture = claims?.FirstOrDefault(c => c.Type == "picture")?.Value ?? "",
