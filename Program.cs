@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using System.Net;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -144,5 +148,20 @@ app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();
+
+
+app.UseStatusCodePages(async context =>
+{
+    if (context.HttpContext.Response.StatusCode == 404)
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        var response = new
+        {
+            StatusCode = HttpStatusCode.NotFound,
+            Message = "Recurso nao encontrado"
+        };
+        await context.HttpContext.Response.WriteAsync(Encoding.UTF8.GetString(JsonSerializer.SerializeToUtf8Bytes(response, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull })));
+    }
+});
 
 app.Run();
