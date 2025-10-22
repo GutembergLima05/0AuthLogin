@@ -1,6 +1,0 @@
-@_0AuthLogin_HostAddress = http://localhost:5128
-
-GET {{_0AuthLogin_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

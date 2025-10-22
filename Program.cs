@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using System.Threading.RateLimiting;
+using static System.Net.WebRequestMethods;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,7 +30,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://meu-frontend.com") // Origem exemplo
+        policy.WithOrigins(builder.Configuration["FrontUrl"] ?? "https://web.fourdevs.com.br")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
