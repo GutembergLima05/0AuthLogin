@@ -1,10 +1,9 @@
-using Microsoft.AspNetCore.Authentication;
+ï»¿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -36,7 +35,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configurar autenticação
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -51,25 +49,56 @@ builder.Services.AddAuthentication(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
+    
+    // Retorna 401 para requisiÃ§Ãµes de API nÃ£o autenticadas
+    options.Events = new CookieAuthenticationEvents
+    {
+        OnRedirectToLogin = context =>
+        {
+            // Se for requisiÃ§Ã£o API ou rota /auth/*, retorna 401
+            if (context.Request.Path.StartsWithSegments("/auth") && 
+                !context.Request.Path.Equals("/auth/login") ||
+                context.Request.Headers["Accept"].ToString().Contains("application/json"))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                return context.Response.WriteAsJsonAsync(new 
+                { 
+                    message = "NÃ£o autenticado",
+                    loginUrl = "/auth/login"
+                });
+            }
+
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        },
+        
+        OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/json";
+            return context.Response.WriteAsJsonAsync(new 
+            { 
+                message = "Acesso negado" 
+            });
+        }
+    };
 })
 .AddGoogle(options =>
 {
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? throw new InvalidOperationException("Configuração de autenticação ausente");
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? throw new InvalidOperationException("Configuração de autenticação ausente");
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? throw new InvalidOperationException("ConfiguraÃ§Ã£o de autenticaÃ§Ã£o ausente");
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? throw new InvalidOperationException("ConfiguraÃ§Ã£o de autenticaÃ§Ã£o ausente");
     options.SaveTokens = true;
     options.CallbackPath = "/auth/callback";
 
-    // Escopos adicionais (opcional)
     options.Scope.Add("profile");
     options.Scope.Add("email");
 
-    // Mapear claims
     options.ClaimActions.MapJsonKey("picture", "picture");
 });
 
 builder.Services.AddAuthorization();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -86,20 +115,18 @@ app.Use(async (context, next) =>
     "default-src 'self'; " +
     "script-src 'self'; " +
     "style-src 'self'; " + 
-    "img-src 'self' data: https://lh3.googleusercontent.com; " + // Para fotos do Google
+    "img-src 'self' data: https://lh3.googleusercontent.com; " +
     "font-src 'self'; " +
-    "connect-src 'self' https://accounts.google.com; " + // Para OAuth
+    "connect-src 'self' https://accounts.google.com; " +
     "frame-ancestors 'none'; " +
     "base-uri 'self'; " +
-    "form-action 'self' https://accounts.google.com;"); // Para OAuth
+    "form-action 'self' https://accounts.google.com;");
 
     await next();
 });
 
-
 app.UseRouting();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
